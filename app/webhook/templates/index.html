@@ -1,64 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Tsk Github activity Feed</title>
-        <style>body {font-family: sans-serif; padding: 20px;background: #f9f9f9;}
-            h1 {font-size: 24px;}
-            u1 {list-style: none; padding: 0;}
-            ul { list-style: none; padding: 0; }
-    li { background: white; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
-        </style>
-    </head>
-    <body>
-        <h1>Github activity</h1>
-        <ul id="events"></ul>
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub Activity Feed</title>
+    <style>
+        body {
+            font-family: sans-serif; 
+            padding: 20px;
+            background: #f9f9f9;
+        }
+        h1 {
+            font-size: 24px;
+        }
+        ul {
+            list-style: none; 
+            padding: 0;
+        }
+        li {
+            background: white; 
+            margin-bottom: 10px; 
+            padding: 10px; 
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>GitHub Activity</h1>
+    <ul id="events"></ul>
 
-        <script>
-            function formatTime(ts){
-                const date = new Date(ts);
-                return date.toLocaleDateString("en-GB", {
-                    day:'numeric',month:'long',year:'numeric',
-                    hour: '2-digit',minute:'2-digit',hour12:true,
-                    timeZone: 'UTC'    
+    <script>
+        function formatTime(ts) {
+            const date = new Date(ts);
+            return date.toLocaleDateString("en-GB", {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'UTC'
             }) + ' UTC';
-            }
-
-           function showEvent(e){
-            if(e.action == 'push'){
-               return `"${e.author}" pushed to "${e.to_branch}" on ${formatTime(e.timestamp)}`;
-            }
-            
-            else if(e.action == 'pull_request'){
-                 return `"${e.author}" submitted a pull request from "${e.from_branch}" to "${e.to_branch}" on ${formatTime(e.timestamp)}`;
-                
-           }
-
-           else if(e.action == 'merge'){
-                 return `"${e.author}" merged branch "${e.from_branch}" to "${e.to_branch}" on ${formatTime(e.timestamp)}`;
-      
-           }
-
-           return '';
-        
         }
 
-        async function fetchEvents(){
-            const result = await fetch('/events');
-            const data = await result.json();
-            const list = document.getElementById('events');
-            list.innerHTML = '';
-            data.forEach(e=> {
-                const li = document.createElement('li');
-                li.textContent = showEvent(e);
-                list.appendChild(li);
+        function showEvent(e) {
+            if (e.action === 'push') {
+                return `"${e.author}" pushed to "${e.to_branch}" on ${formatTime(e.timestamp)}`;
+            } else if (e.action === 'pull_request') {
+                return `"${e.author}" submitted a pull request from "${e.from_branch}" to "${e.to_branch}" on ${formatTime(e.timestamp)}`;
+            } else if (e.action === 'merge') {
+                return `"${e.author}" merged branch "${e.from_branch}" to "${e.to_branch}" on ${formatTime(e.timestamp)}`;
             }
-        
-        );
+            return '';
+        }
+
+        async function fetchEvents() {
+            try {
+                const result = await fetch('/events');
+                const data = await result.json();
+                console.log(data);
+                
+                const list = document.getElementById('events');
+                list.innerHTML = '';
+                
+                 if (data.status === 'success' && data.events) {
+                    if (data.events.length === 0) {
+                        const li = document.createElement('li');
+                        li.textContent = 'No events to display';
+                        list.appendChild(li);
+                    } else {
+                        data.events.forEach(e => {
+                            const li = document.createElement('li');
+                            li.textContent = showEvent(e);
+                            list.appendChild(li);
+                        });
+                    }
+                } else {
+                    const li = document.createElement('li');
+                    li.textContent = 'Error loading events';
+                    list.appendChild(li);
+                }
+            } catch (error) {
+                console.error('Error fetching events:', error);
+                const list = document.getElementById('events');
+                list.innerHTML = '<li>Error loading events</li>';
+            }
         }
 
         fetchEvents();
-        setInterval(fetchEvents,15000);
-        </script>
-    </body>
+        setInterval(fetchEvents, 15000);
+    </script>
+</body>
 </html>
